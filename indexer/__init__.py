@@ -1,0 +1,1 @@
+"""Streaming Wikipedia dump indexer."""

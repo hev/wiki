@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Search Wikipedia with Lattice embeddings running inside hev layer.">
+    <title>Wikipedia × Lattice</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main>
+      <header class="masthead">
+        <div class="wordmark" aria-label="Wikipedia Lattice search">
+          <span class="globe" aria-hidden="true">W</span>
+          <div>
+            <h1>Wikipedia</h1>
+            <p>semantic search, made small</p>
+          </div>
+        </div>
+        <a class="about-link" href="https://github.com/hev/wiki">How it works ↗</a>
+      </header>
+
+      <section class="hero">
+        <p class="eyebrow">Simple English Wikipedia · live demo</p>
+        <h2>Ask for an idea,<br>not an exact phrase.</h2>
+        <p class="intro">Each paragraph is embedded inside the Layer gateway by an 8 MB Lattice model, then searched on Turbopuffer. No browser-side model. No hidden reranker.</p>
+        <form id="search-form" role="search">
+          <label class="sr-only" for="query">Search Wikipedia</label>
+          <div class="search-box">
+            <input id="query" name="query" type="search" maxlength="500" autocomplete="off" placeholder="Try “the largest planet in the solar system”" required>
+            <button type="submit">Search</button>
+          </div>
+        </form>
+        <div class="examples" aria-label="Example searches">
+          <span>Try</span>
+          <button type="button">largest planet in the solar system</button>
+          <button type="button">how plants turn sunlight into energy</button>
+          <button type="button">computer operating system created by Microsoft</button>
+        </div>
+      </section>
+
+      <section id="proof" class="proof" aria-live="polite">
+        <div class="proof-item">
+          <span class="proof-label">Serving leg</span>
+          <strong><i class="pulse"></i> lattice</strong>
+        </div>
+        <div class="proof-item">
+          <span class="proof-label">Model</span>
+          <strong>int4-row · 512d</strong>
+        </div>
+        <div class="proof-item">
+          <span class="proof-label">Gateway embed</span>
+          <strong id="embed-latency">waiting</strong>
+        </div>
+        <div class="proof-item">
+          <span class="proof-label">Round trip</span>
+          <strong id="total-latency">waiting</strong>
+        </div>
+      </section>
+
+      <section id="results-section" class="results-section" hidden>
+        <div class="results-heading">
+          <p id="result-summary">Results</p>
+          <span id="namespace-label">wiki-simple</span>
+        </div>
+        <ol id="results"></ol>
+      </section>
+
+      <section id="empty" class="empty" hidden>
+        <h3>No close matches yet.</h3>
+        <p>Try a broader description or another topic.</p>
+      </section>
+
+      <footer>
+        <p>Built on <a href="https://hevlayer.com">hev layer</a>. Lattice runs in-process on CPU; vectors are stored as f32[512].</p>
+        <p id="status">Ready.</p>
+      </footer>
+    </main>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

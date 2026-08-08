@@ -1,0 +1,94 @@
+const MODEL = "erikkaum/lattice-retrieval";
+const DIMS = 512;
+const SERVING = "lattice";
+const INCLUDE = ["title", "text", "url", "article_id", "paragraph", "is_lead"];
+
+const json = (data, status = 200) =>
+  new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      "cache-control": "no-store",
+    },
+  });
+
+export function searchBody(query, topK = 12) {
+  return {
+    rank_by: ["text", "ANN", ["Embed", query]],
+    top_k: Math.max(1, Math.min(Number(topK) || 12, 30)),
+    include_attributes: INCLUDE,
+  };
+}
+
+export async function proxySearch(request, env) {
+  const key = env.LAYER_API_KEY || env.LAYER_GATEWAY_API_KEY;
+  if (!key) return json({ detail: "Layer gateway key is not configured" }, 503);
+
+  let input;
+  try {
+    input = await request.json();
+  } catch {
+    return json({ detail: "request body must be JSON" }, 400);
+  }
+  const query = String(input.query || "").trim();
+  if (!query) return json({ detail: "query must not be empty" }, 422);
+  if (query.length > 500) return json({ detail: "query must be 500 characters or fewer" }, 422);
+
+  const gateway = String(env.LAYER_GATEWAY_URL || "https://aws-us-east-1.hevlayer.com").replace(/\/+$/, "");
+  const namespace = env.LAYER_NAMESPACE || "wiki-simple";
+  const started = performance.now();
+  let response;
+  try {
+    response = await fetch(`${gateway}/v2/namespaces/${namespace}/query`, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${key}`,
+        "content-type": "application/json",
+        "x-hevlayer-search-query": query,
+        "x-hevlayer-tags": "app:wiki,serving:lattice",
+      },
+      body: JSON.stringify(searchBody(query, input.top_k)),
+    });
+  } catch (error) {
+    return json({ detail: `gateway unreachable: ${String(error)}` }, 502);
+  }
+  const tookMs = Math.round((performance.now() - started) * 10) / 10;
+  const text = await response.text();
+  let upstream;
+  try {
+    upstream = JSON.parse(text);
+  } catch {
+    return json({ detail: `gateway returned invalid JSON (${response.status})` }, 502);
+  }
+  if (!response.ok) {
+    return json({ detail: upstream.detail || upstream.error || text.slice(0, 1000) }, response.status >= 500 ? 502 : response.status);
+  }
+  return json({
+    query,
+    rows: upstream.rows || [],
+    performance: upstream.performance || {},
+    billing: upstream.billing || null,
+    routing: upstream.routing || null,
+    hybrid: upstream.hybrid || null,
+    serving: { prefer: SERVING, model: MODEL, dims: DIMS },
+    took_ms: tookMs,
+  });
+}
+
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    if (url.pathname === "/api/config") {
+      return json({
+        namespace: env.LAYER_NAMESPACE || "wiki-simple",
+        gateway: env.LAYER_GATEWAY_URL || "https://aws-us-east-1.hevlayer.com",
+        serving: { prefer: SERVING, model: MODEL, dims: DIMS },
+      });
+    }
+    if (url.pathname === "/api/search") {
+      if (request.method !== "POST") return json({ detail: "method not allowed" }, 405);
+      return proxySearch(request, env);
+    }
+    return env.ASSETS.fetch(request);
+  },
+};

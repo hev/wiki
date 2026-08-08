@@ -1,0 +1,13 @@
+# Public source identity for the declarative twin. The stock Hugging Face
+# source streams the Wikimedia export without credentials; the imperative CLI
+# reads Wikimedia's canonical pages-articles XML dump directly.
+apiVersion: hevlayer.com/v1alpha1
+kind: Warehouse
+metadata:
+  name: wikipedia-hub
+  namespace: wiki
+spec:
+  kind: huggingface
+  huggingface:
+    endpoint: https://huggingface.co
+  verifyInterval: 24h

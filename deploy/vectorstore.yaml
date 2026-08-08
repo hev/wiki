@@ -1,0 +1,17 @@
+apiVersion: hevlayer.com/v1alpha1
+kind: VectorStore
+metadata:
+  name: turbopuffer-default
+  namespace: wiki
+spec:
+  kind: turbopuffer
+  default: true
+  endpoint:
+    url: https://aws-us-east-1.turbopuffer.com
+    region: aws-us-east-1
+  credential:
+    secretRef:
+      name: wiki-turbopuffer
+      key: credential
+  inboundAuth:
+    mode: deriveFromStore
