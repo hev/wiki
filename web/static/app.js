@@ -88,10 +88,9 @@ fetch("/api/config").then((response) => response.json()).then((config) => {
   namespaceLabel.textContent = config.namespace;
 }).catch(() => {});
 
-// Rows are paragraph chunks, not articles — the ratio below is measured from
-// the first 2,000-article checkpoint (30,268 rows) and used as a live estimate
-// until the indexer self-reports an exact article count.
-const ROWS_PER_ARTICLE = 30268 / 2000;
+// Exact figure from the completed 2026-08-08 full-dump run (indexer checkpoint:
+// next_article 283,997 / 1,560,992 rows). Chunk count stays live from /api/stats.
+const INDEXED_ARTICLES = 283997;
 const corpusArticles = document.querySelector("#corpus-articles");
 const corpusSize = document.querySelector("#corpus-size");
 
@@ -109,10 +108,9 @@ function formatBytes(bytes) {
 
 fetch("/api/stats").then((response) => response.json()).then((stats) => {
   if (Number.isFinite(stats.approx_row_count)) {
-    const articles = Math.round(stats.approx_row_count / ROWS_PER_ARTICLE);
-    corpusArticles.textContent = `~${articles.toLocaleString()} (${stats.approx_row_count.toLocaleString()} chunks)`;
+    corpusArticles.textContent = `${INDEXED_ARTICLES.toLocaleString()} (${stats.approx_row_count.toLocaleString()} chunks)`;
   } else {
-    corpusArticles.textContent = "unavailable";
+    corpusArticles.textContent = INDEXED_ARTICLES.toLocaleString();
   }
   corpusSize.textContent = Number.isFinite(stats.approx_logical_bytes) ? formatBytes(stats.approx_logical_bytes) : "unavailable";
 }).catch(() => {
