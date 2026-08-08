@@ -75,6 +75,36 @@ export async function proxySearch(request, env) {
   });
 }
 
+export async function proxyStats(env) {
+  const key = env.LAYER_API_KEY || env.LAYER_GATEWAY_API_KEY;
+  if (!key) return json({ detail: "Layer gateway key is not configured" }, 503);
+  const gateway = String(env.LAYER_GATEWAY_URL || "https://aws-us-east-1.hevlayer.com").replace(/\/+$/, "");
+  const namespace = env.LAYER_NAMESPACE || "wiki-simple";
+  let response;
+  try {
+    response = await fetch(`${gateway}/v1/namespaces/${namespace}/metadata`, {
+      headers: { authorization: `Bearer ${key}` },
+    });
+  } catch (error) {
+    return json({ detail: `gateway unreachable: ${String(error)}` }, 502);
+  }
+  const text = await response.text();
+  let upstream;
+  try {
+    upstream = JSON.parse(text);
+  } catch {
+    return json({ detail: `gateway returned invalid JSON (${response.status})` }, 502);
+  }
+  if (!response.ok) {
+    return json({ detail: upstream.detail || upstream.error || text.slice(0, 1000) }, response.status >= 500 ? 502 : response.status);
+  }
+  return json({
+    approx_row_count: upstream.approx_row_count ?? null,
+    approx_logical_bytes: upstream.approx_logical_bytes ?? null,
+    updated_at: upstream.updated_at ?? null,
+  });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -84,6 +114,9 @@ export default {
         gateway: env.LAYER_GATEWAY_URL || "https://aws-us-east-1.hevlayer.com",
         serving: { prefer: SERVING, model: MODEL, dims: DIMS },
       });
+    }
+    if (url.pathname === "/api/stats") {
+      return proxyStats(env);
     }
     if (url.pathname === "/api/search") {
       if (request.method !== "POST") return json({ detail: "method not allowed" }, 405);
