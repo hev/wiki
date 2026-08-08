@@ -88,6 +88,38 @@ fetch("/api/config").then((response) => response.json()).then((config) => {
   namespaceLabel.textContent = config.namespace;
 }).catch(() => {});
 
+// Rows are paragraph chunks, not articles — the ratio below is measured from
+// the first 2,000-article checkpoint (30,268 rows) and used as a live estimate
+// until the indexer self-reports an exact article count.
+const ROWS_PER_ARTICLE = 30268 / 2000;
+const corpusArticles = document.querySelector("#corpus-articles");
+const corpusSize = document.querySelector("#corpus-size");
+
+function formatBytes(bytes) {
+  if (!Number.isFinite(bytes)) return "—";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let value = bytes;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
+  return `${value.toFixed(unit === 0 ? 0 : 1)} ${units[unit]}`;
+}
+
+fetch("/api/stats").then((response) => response.json()).then((stats) => {
+  if (Number.isFinite(stats.approx_row_count)) {
+    const articles = Math.round(stats.approx_row_count / ROWS_PER_ARTICLE);
+    corpusArticles.textContent = `~${articles.toLocaleString()} (${stats.approx_row_count.toLocaleString()} chunks)`;
+  } else {
+    corpusArticles.textContent = "unavailable";
+  }
+  corpusSize.textContent = Number.isFinite(stats.approx_logical_bytes) ? formatBytes(stats.approx_logical_bytes) : "unavailable";
+}).catch(() => {
+  corpusArticles.textContent = "unavailable";
+  corpusSize.textContent = "unavailable";
+});
+
 const initial = new URL(location.href).searchParams.get("q");
 if (initial) {
   input.value = initial;
