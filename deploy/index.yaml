@@ -1,0 +1,19 @@
+apiVersion: hevlayer.com/v1
+kind: Index
+metadata:
+  name: wiki-simple
+  namespace: layer
+spec:
+  backend:
+    storeRef: turbopuffer-default
+    namespace: wiki-simple
+    distanceMetric: cosine_distance
+  metadata:
+    labels:
+      app: wiki
+      corpus: simple-wikipedia
+    tags:
+      - wikipedia
+      - lattice
+      - semantic-search
+  consistency: strong

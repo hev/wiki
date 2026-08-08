@@ -1,0 +1,13 @@
+.env
+.dev.vars
+.venv/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+.cache/
+.state/
+node_modules/
+.wrangler/
+dist/
+*.log
+browser-*.png

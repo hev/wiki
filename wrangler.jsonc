@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "wiki",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-08-08",
+  "assets": {
+    "directory": "./web/static",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+    "not_found_handling": "single-page-application"
+  },
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true, "head_sampling_rate": 1 }
+  },
+  "vars": {
+    "LAYER_GATEWAY_URL": "https://aws-us-east-1.hevlayer.com",
+    "LAYER_NAMESPACE": "wiki-simple"
+  },
+  "routes": [
+    { "pattern": "wiki.hevlayer.com", "custom_domain": true }
+  ]
+}

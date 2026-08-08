@@ -1,0 +1,35 @@
+apiVersion: hevlayer.com/v1alpha1
+kind: Pipeline
+metadata:
+  name: wiki-simple
+  namespace: wiki
+spec:
+  pipelineId: wiki-simple
+  target:
+    namespace: wiki-simple
+  sourceRef:
+    kind: huggingface
+    warehouseRef: wikipedia-hub
+    dataset: wikimedia/wikipedia
+    config: 20231101.simple
+    split: train
+    mapping:
+      id: id
+      text: text
+      attributes: [title, url]
+    chunk:
+      strategy: recursive
+      unit: characters
+      size: 1800
+      overlap: 0
+  worker:
+    computeClass: cpu
+    batchSize: 64
+    timeoutSeconds: 3600
+  scaling:
+    pool: cpu
+    mode: autoscale
+    replicas:
+      min: 0
+      max: 2
+  paused: true
