@@ -22,7 +22,7 @@ Lattice's int4-per-row quantization applies to its approximately 8 MB lookup-tab
 
 The initial live corpus is a bounded slice of Simple English Wikipedia from Wikimedia's `pages-articles` XML dump. Redirects and non-article namespaces are skipped. Wiki markup is stripped, then each article becomes stable chunks containing `title + paragraph`; paragraphs over 1,800 characters split at a sentence or word boundary. The lead is marked separately.
 
-As deployed on 2026-08-08, `wiki-simple` contains the first **2,000 articles / 30,268 paragraph chunks** from `simplewiki-latest-pages-articles.xml.bz2`. The bounded ingest took 396 seconds. Example live queries include “largest planet in the solar system,” “how plants turn sunlight into energy,” and “computer operating system created by Microsoft.”
+As deployed on 2026-08-08, `wiki-simple` contains the complete dump: **283,997 articles / 1,560,992 paragraph chunks** from `simplewiki-latest-pages-articles.xml.bz2`, stored in aws-us-east-1 turbopuffer. The bulk of the run (266k articles) indexed in 18 minutes at ~246 articles/sec with `--batch-size 10000`. Example live queries include “largest planet in the solar system,” “how plants turn sunlight into energy,” and “computer operating system created by Microsoft.”
 
 The loader checkpoints an article cursor under `.state/` and uses stable content-derived row ids. Re-running is idempotent; rerun the same command to resume, increase `--limit-articles`, or point `--dump` at another Wikimedia pages-articles dump to expand the corpus.
 
