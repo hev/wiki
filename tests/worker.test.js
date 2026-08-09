@@ -1,16 +1,28 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { proxySearch, searchBody } from "../src/worker.js";
+import { dedupeByArticle, proxySearch, searchBody } from "../src/worker.js";
 
 test("worker sends one Auto query with an inline Embed expression", () => {
   assert.deepEqual(searchBody("moon landing", 50), {
     rank_by: ["title", "Auto", "moon landing", {
       vector: ["Embed", "moon landing", { field: "text" }],
     }],
-    top_k: 30,
+    top_k: 120,
     include_attributes: ["title", "text", "url", "article_id", "paragraph", "is_lead"],
   });
+});
+
+test("dedupeByArticle keeps only the best-ranked chunk per article", () => {
+  const rows = [
+    { id: "42-0", article_id: "42", title: "A" },
+    { id: "42-3", article_id: "42", title: "A" },
+    { id: "7-1", article_id: "7", title: "B" },
+    { id: "42-1", article_id: "42", title: "A" },
+    { id: "9-0", article_id: "9", title: "C" },
+  ];
+  assert.deepEqual(dedupeByArticle(rows, 2).map((r) => r.id), ["42-0", "7-1"]);
+  assert.deepEqual(dedupeByArticle(rows, 10).map((r) => r.id), ["42-0", "7-1", "9-0"]);
 });
 
 test("worker preserves gateway performance and routing echoes", async (t) => {
