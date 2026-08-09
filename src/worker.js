@@ -12,12 +12,32 @@ const json = (data, status = 200) =>
     },
   });
 
+// Rows are paragraph chunks; several chunks of one article can dominate a
+// result page (fused legs especially — every paragraph of a title match ranks).
+// Over-fetch, then keep only the best-ranked chunk per article.
+const OVERFETCH = 4;
+
 export function searchBody(query, topK = 12) {
+  const k = Math.max(1, Math.min(Number(topK) || 12, 30));
   return {
     rank_by: ["title", "Auto", query, { vector: ["Embed", query, { field: "text" }] }],
-    top_k: Math.max(1, Math.min(Number(topK) || 12, 30)),
+    top_k: Math.min(k * OVERFETCH, 120),
     include_attributes: INCLUDE,
   };
+}
+
+export function dedupeByArticle(rows, topK = 12) {
+  const k = Math.max(1, Math.min(Number(topK) || 12, 30));
+  const seen = new Set();
+  const out = [];
+  for (const row of rows) {
+    const article = row.article_id ?? row.id;
+    if (seen.has(article)) continue;
+    seen.add(article);
+    out.push(row);
+    if (out.length >= k) break;
+  }
+  return out;
 }
 
 export async function proxySearch(request, env) {
@@ -65,7 +85,7 @@ export async function proxySearch(request, env) {
   }
   return json({
     query,
-    rows: upstream.rows || [],
+    rows: dedupeByArticle(upstream.rows || [], input.top_k),
     performance: upstream.performance || {},
     billing: upstream.billing || null,
     routing: upstream.routing || null,
