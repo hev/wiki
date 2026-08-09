@@ -16,7 +16,7 @@ Every search response includes the gateway's `routing` echo, including the selec
 }
 ```
 
-Lattice's int4-per-row quantization applies to its approximately 8 MB lookup-table artifact. Layer emits normalized vectors and this demo stores them as `f32[512]`; Turbopuffer's int8 vector storage is a separate option and is not used here. See the Layer 0.5 docs for [query routing](https://hevlayer.com/docs/api/query#query-routing), [hybrid text fusion](https://hevlayer.com/docs/api/query#hybrid-text-fusion), and the [Embed API](https://hevlayer.com/docs/api/embed).
+Lattice's int4-per-row quantization applies to its approximately 8 MB lookup-table artifact. Layer emits normalized vectors and this demo stores them as `f32[512]`; Turbopuffer's int8 vector storage is a separate option and is not used here. See the Layer 0.5 docs for [query routing](https://v0.5.x.hevlayer.com/docs/api/query#query-routing), [hybrid text fusion](https://v0.5.x.hevlayer.com/docs/api/query#hybrid-text-fusion), and the [Embed API](https://v0.5.x.hevlayer.com/docs/api/embed).
 
 ## Corpus and chunking
 

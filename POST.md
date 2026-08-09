@@ -113,4 +113,4 @@ Embedding usually arrives as infrastructure: a hosted API, a GPU deployment, an 
 
 Putting it inside Layer did not only remove a service. It gave document writes and queries one model profile, kept vectors off the client boundary, made serving selection explicit, and returned the work as observable response data. The Wikipedia demo is the proof that this is not just a provider interface—it is a usable end-to-end path over real content.
 
-Try it at **[wiki.hevlayer.com](https://wiki.hevlayer.com)**, then read the [Layer Embed documentation](https://hevlayer.com/docs/api/embed/) for the wire and serving modes behind it.
+Try it at **[wiki.hevlayer.com](https://wiki.hevlayer.com)**, then read the [Layer Embed documentation](https://v0.5.x.hevlayer.com/docs/api/embed/) for the wire and serving modes behind it.
