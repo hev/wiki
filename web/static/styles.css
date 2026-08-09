@@ -21,7 +21,9 @@ main { width: min(1100px, calc(100% - 40px)); margin: 0 auto; }
 .wordmark h1 { margin: 0; font: 30px/.85 var(--serif); letter-spacing: -.02em; }
 .wordmark p { margin: 7px 0 0; color: var(--muted); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; }
 .about-link { font-size: 13px; text-decoration: none; border-bottom: 1px solid var(--ink); }
-.hero { padding: 76px 0 48px; max-width: 900px; }
+.hero { padding: 76px 0 48px; }
+.hero-top { display: grid; grid-template-columns: minmax(0, 650px) 1fr; align-items: center; gap: 48px; }
+.hero-art { justify-self: end; width: min(100%, 340px); height: auto; }
 .eyebrow { margin: 0 0 22px; color: var(--signal); font-size: 12px; font-weight: 750; letter-spacing: .16em; text-transform: uppercase; }
 .hero h2 { margin: 0; max-width: 760px; font: 64px/.98 var(--serif); letter-spacing: -.045em; }
 .intro { max-width: 650px; margin: 28px 0 36px; color: var(--muted); font: 18px/1.6 var(--serif); }
@@ -61,6 +63,8 @@ footer { display: flex; justify-content: space-between; gap: 30px; margin-top: 4
   .masthead { padding: 18px 0; }
   .about-link { display: none; }
   .hero { padding: 52px 0 34px; }
+  .hero-top { grid-template-columns: 1fr; gap: 0; }
+  .hero-art { display: none; }
   .hero h2 { font-size: 43px; }
   .intro { font-size: 16px; }
   .search-box { display: block; }
