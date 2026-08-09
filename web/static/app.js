@@ -8,6 +8,7 @@ const status = document.querySelector("#status");
 const summary = document.querySelector("#result-summary");
 const embedLatency = document.querySelector("#embed-latency");
 const totalLatency = document.querySelector("#total-latency");
+const routeTaken = document.querySelector("#route-taken");
 const namespaceLabel = document.querySelector("#namespace-label");
 
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>'"]/g, (char) => ({
@@ -29,14 +30,27 @@ function renderRows(rows) {
         <h3><a href="${escapeHtml(row.url)}" target="_blank" rel="noreferrer">${escapeHtml(row.title || "Untitled")}</a></h3>
         <p>${escapeHtml(excerpt(row))}</p>
       </article>
-      <span class="distance">${Number.isFinite(row.$dist) ? `distance ${row.$dist.toFixed(4)}` : "semantic match"}</span>
+      <span class="distance">${Number.isFinite(row.$dist) ? `distance ${row.$dist.toFixed(4)}` : Number.isFinite(row.$score) ? `RRF ${row.$score.toFixed(4)}` : "routed match"}</span>
     </li>`).join("");
+}
+
+const ROUTE_LABELS = {
+  hybrid_text: "full-text",
+  semantic: "semantic",
+  fused: "fused (RRF)",
+};
+
+function routingLabel(routing) {
+  if (!routing?.route) return "unavailable";
+  const label = ROUTE_LABELS[routing.route] || routing.route;
+  return routing.executed === false ? `${label} · deferred` : label;
 }
 
 async function runSearch(query) {
   submit.disabled = true;
   submit.textContent = "Searching…";
-  status.textContent = "Layer is embedding the query with Lattice…";
+  status.textContent = "Layer is choosing the retrieval route…";
+  routeTaken.textContent = "routing…";
   resultsSection.hidden = true;
   empty.hidden = true;
   try {
@@ -48,19 +62,29 @@ async function runSearch(query) {
     const data = await response.json();
     if (!response.ok) throw new Error(data.detail || `Search failed (${response.status})`);
     const rows = data.rows || [];
-    embedLatency.textContent = data.performance?.embedding_ms == null ? "cache hit" : `${Number(data.performance.embedding_ms).toFixed(2)} ms`;
+    const route = data.routing?.route;
+    routeTaken.textContent = routingLabel(data.routing);
+    embedLatency.textContent = route === "hybrid_text"
+      ? "not needed"
+      : data.performance?.embedding_ms == null
+        ? "cache hit"
+        : `${Number(data.performance.embedding_ms).toFixed(2)} ms`;
     totalLatency.textContent = `${Number(data.took_ms).toFixed(1)} ms`;
     namespaceLabel.textContent = data.serving ? `${data.serving.prefer} · ${data.serving.dims}d` : "wiki-simple";
-    summary.textContent = `${rows.length} semantic matches for “${query}”`;
+    summary.textContent = `${rows.length} ${routingLabel(data.routing)} matches for “${query}”`;
     if (rows.length) {
       renderRows(rows);
       resultsSection.hidden = false;
     } else {
       empty.hidden = false;
     }
-    status.textContent = `Gateway echo: ${data.performance?.embedding_tokens ?? "cached"} embedding tokens.`;
+    const embedWork = route === "hybrid_text"
+      ? "no embedding needed"
+      : `${data.performance?.embedding_tokens ?? "cached"} embedding tokens`;
+    status.textContent = `Gateway echo: ${routingLabel(data.routing)} · ${embedWork}.`;
     history.replaceState(null, "", `?q=${encodeURIComponent(query)}`);
   } catch (error) {
+    routeTaken.textContent = "unavailable";
     empty.hidden = false;
     empty.querySelector("h3").textContent = "Search is temporarily unavailable.";
     empty.querySelector("p").textContent = error.message;
@@ -88,9 +112,10 @@ fetch("/api/config").then((response) => response.json()).then((config) => {
   namespaceLabel.textContent = config.namespace;
 }).catch(() => {});
 
-// Exact figure from the completed 2026-08-08 full-dump run (indexer checkpoint:
-// next_article 283,997 / 1,560,992 rows). Chunk count stays live from /api/stats.
+// Exact figures from the completed 2026-08-08 full-dump run. Metadata row
+// counts are approximate, so the proof tile uses the completed-run totals.
 const INDEXED_ARTICLES = 283997;
+const INDEXED_ROWS = 1737141;
 const corpusArticles = document.querySelector("#corpus-articles");
 const corpusSize = document.querySelector("#corpus-size");
 
@@ -107,14 +132,10 @@ function formatBytes(bytes) {
 }
 
 fetch("/api/stats").then((response) => response.json()).then((stats) => {
-  if (Number.isFinite(stats.approx_row_count)) {
-    corpusArticles.textContent = `${INDEXED_ARTICLES.toLocaleString()} (${stats.approx_row_count.toLocaleString()} chunks)`;
-  } else {
-    corpusArticles.textContent = INDEXED_ARTICLES.toLocaleString();
-  }
+  corpusArticles.textContent = `${INDEXED_ARTICLES.toLocaleString()} · ${INDEXED_ROWS.toLocaleString()} rows`;
   corpusSize.textContent = Number.isFinite(stats.approx_logical_bytes) ? formatBytes(stats.approx_logical_bytes) : "unavailable";
 }).catch(() => {
-  corpusArticles.textContent = "unavailable";
+  corpusArticles.textContent = `${INDEXED_ARTICLES.toLocaleString()} · ${INDEXED_ROWS.toLocaleString()} rows`;
   corpusSize.textContent = "unavailable";
 });
 

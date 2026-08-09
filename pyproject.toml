@@ -1,7 +1,7 @@
 [project]
 name = "wiki"
 version = "0.1.0"
-description = "Wikipedia semantic search through hev layer's Lattice embedding leg"
+description = "Auto-routed hybrid Wikipedia search through hev layer"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
