@@ -141,18 +141,20 @@ def iter_articles(path: Path) -> Iterator[tuple[str, str, str]]:
                 yield str(page.id), page.title, text
 
 
-def load_cursor(path: Path, *, dump: str) -> int:
+def load_checkpoint(path: Path, *, dump: str) -> tuple[int, int]:
     if not path.exists():
-        return 0
+        return 0, 0
     saved = json.loads(path.read_text())
     if saved.get("dump") != dump:
         raise RuntimeError(f"resume state belongs to another dump: {saved.get('dump')}")
-    return int(saved.get("next_article", 0))
+    return int(saved.get("next_article", 0)), int(saved.get("rows", 0))
 
 
 def save_cursor(path: Path, *, dump: str, next_article: int, rows: int) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps({"dump": dump, "next_article": next_article, "rows": rows}, indent=2) + "\n")
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(json.dumps({"dump": dump, "next_article": next_article, "rows": rows}, indent=2) + "\n")
+    temporary.replace(path)
 
 
 def write_batch(client: httpx.Client, settings: Settings, namespace: str, rows: list[dict]) -> dict:
@@ -180,9 +182,13 @@ def main() -> None:
     dump_identity = str(dump_path.resolve())
     if args.reset_state and args.state.exists():
         args.state.unlink()
-    start = args.start_article if args.start_article is not None else load_cursor(args.state, dump=dump_identity)
+    if args.start_article is None:
+        start, checkpoint_rows = load_checkpoint(args.state, dump=dump_identity)
+    else:
+        start = args.start_article
+        checkpoint_rows = 0
     articles_done = start
-    rows_done = 0
+    rows_written = 0
     batch: list[dict] = []
     batch_last_article = start
     started = time.perf_counter()
@@ -201,23 +207,34 @@ def main() -> None:
             # never skip the tail of a many-paragraph article after a crash.
             if len(batch) >= args.batch_size:
                 result = write_batch(client, settings, namespace, batch)
-                rows_done += len(batch)
+                rows_written += len(batch)
+                checkpoint_rows += len(batch)
                 embed_ms = (result.get("performance") or {}).get("embedding_ms")
-                save_cursor(args.state, dump=dump_identity, next_article=batch_last_article, rows=rows_done)
-                print(f"articles={articles_done:,} rows={rows_done:,} batch_embed_ms={embed_ms}", file=sys.stderr)
+                save_cursor(args.state, dump=dump_identity, next_article=batch_last_article, rows=checkpoint_rows)
+                print(
+                    f"articles={articles_done:,} rows_written={rows_written:,} "
+                    f"checkpoint_rows={checkpoint_rows:,} batch_embed_ms={embed_ms}",
+                    file=sys.stderr,
+                )
                 batch.clear()
         if batch:
             result = write_batch(client, settings, namespace, batch)
-            rows_done += len(batch)
+            rows_written += len(batch)
+            checkpoint_rows += len(batch)
             embed_ms = (result.get("performance") or {}).get("embedding_ms")
-            save_cursor(args.state, dump=dump_identity, next_article=batch_last_article, rows=rows_done)
-            print(f"articles={articles_done:,} rows={rows_done:,} batch_embed_ms={embed_ms}", file=sys.stderr)
+            save_cursor(args.state, dump=dump_identity, next_article=batch_last_article, rows=checkpoint_rows)
+            print(
+                f"articles={articles_done:,} rows_written={rows_written:,} "
+                f"checkpoint_rows={checkpoint_rows:,} batch_embed_ms={embed_ms}",
+                file=sys.stderr,
+            )
 
     elapsed = time.perf_counter() - started
     print(json.dumps({
         "namespace": namespace,
         "articles_processed": articles_done - start,
-        "rows_written": rows_done,
+        "rows_written": rows_written,
+        "checkpoint_rows": checkpoint_rows,
         "next_article": articles_done,
         "elapsed_seconds": round(elapsed, 1),
         "articles_per_second": round((articles_done - start) / elapsed, 2) if elapsed else None,
