@@ -24,7 +24,7 @@ The live corpus is the complete Simple English Wikipedia `pages-articles` XML du
 
 As verified by a clean full-corpus rewrite on 2026-08-08, `wiki-simple` contains **283,997 articles / 1,737,141 paragraph rows** from `simplewiki-latest-pages-articles.xml.bz2`, stored in aws-us-east-1 turbopuffer. The schema rewrite completed in about 20 minutes at 237 articles/sec with `--batch-size 10000`. “George H. W. Bush” exercises the full-text route, “Super Mario Bros. 3” exercises fused retrieval, and “why do plants turn sunlight into useful chemical energy” exercises the semantic route.
 
-The loader checkpoints an article cursor under `.state/` and uses stable content-derived row ids. Re-running is idempotent; rerun the same command to resume, increase `--limit-articles`, or point `--dump` at another Wikimedia pages-articles dump to expand the corpus.
+The loader checkpoints an article cursor and cumulative row count under `.state/` and uses stable content-derived row ids. Re-running without `--start-article` resumes both counts and is idempotent. The final summary reports `rows_written` for the current invocation and `checkpoint_rows` for the cumulative rows represented by the checkpoint.
 
 ## Run
 
@@ -35,13 +35,13 @@ uv sync
 
 # Write the full corpus, including the full-text indexes, into wiki-simple.
 # Stable content-derived row ids make this an idempotent rewrite.
-uv run python -m indexer --limit-articles 0 --start-article 0 --batch-size 10000
+uv run python -m indexer --limit-articles 0 --reset-state --batch-size 10000
 
 # Reference backend + the same UI production serves.
 uv run uvicorn search.app:app --host 127.0.0.1 --port 8000
 ```
 
-The indexer accepts a local `.xml`/`.xml.bz2` file or a dump URL. `--limit-articles 0` continues to the end of the dump. Use `--start-article N` to override the checkpoint explicitly. Disposable live checks must use a `wiki-scratch-*` namespace and delete it afterward.
+The indexer accepts a local `.xml`/`.bz2` file or a dump URL. `--limit-articles 0` continues to the end of the dump. Use `--start-article N` to override the checkpoint explicitly; an explicit override starts a fresh row-count baseline, so only article 0 produces a full-corpus total. Checkpoints created before cumulative row counting may contain an invocation-local `rows` value that cannot be migrated reliably. Reset one of those once with `--reset-state` and perform a clean article-0 rewrite. The live `wiki-simple` checkpoint was already regenerated from article 0 and records the verified 1,737,141-row total, so it does not need that reset. Disposable live checks must use a `wiki-scratch-*` namespace and delete it afterward.
 
 ## Production
 
