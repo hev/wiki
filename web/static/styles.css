@@ -35,9 +35,8 @@ main { width: min(1100px, calc(100% - 40px)); margin: 0 auto; }
 .examples span { font-weight: 700; text-transform: uppercase; letter-spacing: .1em; }
 .examples button { padding: 7px 10px; border: 1px solid var(--rule); border-radius: 99px; background: transparent; color: var(--muted); cursor: pointer; }
 .examples button:hover { border-color: var(--signal); color: var(--signal); }
-.proof { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--rule); background: var(--card); }
-.proof-item { min-width: 0; padding: 18px 20px; border-right: 1px solid var(--rule); }
-.proof-item:last-child { border: 0; }
+.proof { display: grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: 1px; border: 1px solid var(--rule); background: var(--rule); }
+.proof-item { min-width: 0; padding: 18px 20px; background: var(--card); }
 .proof-label { display: block; margin-bottom: 7px; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; }
 .proof-item strong { font: 16px/1.2 var(--serif); }
 .pulse { display: inline-block; width: 8px; height: 8px; margin-right: 5px; border-radius: 50%; background: #2a9b65; box-shadow: 0 0 0 4px var(--signal-soft); }
@@ -67,8 +66,7 @@ footer { display: flex; justify-content: space-between; gap: 30px; margin-top: 4
   .search-box { display: block; }
   .search-box input, .search-box button { width: 100%; }
   .proof { grid-template-columns: 1fr 1fr; }
-  .proof-item:nth-child(2) { border-right: 0; }
-  .proof-item:nth-child(-n+2) { border-bottom: 1px solid var(--rule); }
+  .proof-item:last-child:nth-child(odd) { grid-column: 1 / -1; }
   .result { grid-template-columns: 32px 1fr; gap: 10px; }
   .distance { grid-column: 2; }
   footer { display: block; line-height: 1.6; }

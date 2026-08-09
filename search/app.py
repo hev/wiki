@@ -9,7 +9,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from wiki_common.config import Settings
-from wiki_common.gateway import DIMS, MODEL, SERVING, search_gateway
+from wiki_common.gateway import DIMS, MODEL, SERVING, search_gateway, stats_gateway
 
 WEB = Path(__file__).resolve().parent.parent / "web" / "static"
 settings = Settings()
@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
     await app.state.http.aclose()
 
 
-app = FastAPI(title="Wikipedia search · Lattice on Layer", lifespan=lifespan)
+app = FastAPI(title="Wikipedia search · Layer auto-routing", lifespan=lifespan)
 
 
 class SearchRequest(BaseModel):
@@ -67,6 +67,24 @@ async def search(req: SearchRequest) -> dict:
             namespace=settings.namespace,
             query=query,
             top_k=req.top_k,
+        )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except httpx.HTTPStatusError as exc:
+        status = exc.response.status_code
+        raise HTTPException(status_code=status if status < 500 else 502, detail=str(exc)) from exc
+    except httpx.HTTPError as exc:
+        raise HTTPException(status_code=502, detail=f"gateway unreachable: {exc}") from exc
+
+
+@app.get("/api/stats")
+async def stats() -> dict:
+    try:
+        return await stats_gateway(
+            app.state.http,
+            gateway_url=settings.gateway_url,
+            api_key=settings.gateway_api_key,
+            namespace=settings.namespace,
         )
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
