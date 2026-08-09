@@ -21,9 +21,14 @@
       </header>
 
       <section class="hero">
-        <p class="eyebrow">Simple English Wikipedia · live demo</p>
-        <h2>Search by name<br>or by meaning.</h2>
-        <p class="intro">Across <strong>283,997 articles</strong> and <strong>1,737,141 paragraphs</strong>, Layer automatically routes each query to full-text, semantic Lattice, or an RRF fusion of both. One gateway request makes the choice; the route it actually ran appears below. <a href="https://hevlayer.com/docs/api/query#query-routing">Read how query routing works ↗</a></p>
+        <div class="hero-top">
+          <div class="hero-copy">
+            <p class="eyebrow">Simple English Wikipedia · live demo</p>
+            <h2>Search by name<br>or by meaning.</h2>
+            <p class="intro">Across <strong>283,997 articles</strong> and <strong>1,737,141 paragraphs</strong>, Layer automatically routes each query to full-text, semantic Lattice, or an RRF fusion of both. One gateway request makes the choice; the route it actually ran appears below. <a href="https://hevlayer.com/docs/api/query#query-routing">Read how query routing works ↗</a> · <a href="https://hevlayer.com/docs/api/embed">Embed API docs ↗</a></p>
+          </div>
+          <img class="hero-art" src="/hero-lattice.png" alt="A query routed along two paths — through a woven lattice and through lines of text — converging into one ranked result" width="880" height="880">
+        </div>
         <form id="search-form" role="search">
           <label class="sr-only" for="query">Search Wikipedia</label>
           <div class="search-box">
