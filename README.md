@@ -60,7 +60,7 @@ Both backends send the same single query directly to Layer:
 ```json
 {
   "rank_by": ["title", "Auto", "George H. W. Bush", {
-    "vector": ["Embed", "George H. W. Bush"]
+    "vector": ["Embed", "George H. W. Bush", {"field": "text"}]
   }],
   "top_k": 12
 }

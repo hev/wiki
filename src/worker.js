@@ -14,7 +14,7 @@ const json = (data, status = 200) =>
 
 export function searchBody(query, topK = 12) {
   return {
-    rank_by: ["title", "Auto", query, { vector: ["Embed", query] }],
+    rank_by: ["title", "Auto", query, { vector: ["Embed", query, { field: "text" }] }],
     top_k: Math.max(1, Math.min(Number(topK) || 12, 30)),
     include_attributes: INCLUDE,
   };

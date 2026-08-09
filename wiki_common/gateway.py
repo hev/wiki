@@ -41,7 +41,12 @@ def embedding_schema() -> dict[str, Any]:
 
 def search_body(query: str, top_k: int) -> dict[str, Any]:
     return {
-        "rank_by": ["title", "Auto", query, {"vector": ["Embed", query]}],
+        "rank_by": [
+            "title",
+            "Auto",
+            query,
+            {"vector": ["Embed", query, {"field": "text"}]},
+        ],
         "top_k": max(1, min(top_k, 30)),
         "include_attributes": INCLUDE_ATTRIBUTES,
     }

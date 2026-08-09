@@ -34,7 +34,7 @@ def test_search_uses_one_auto_query_with_inline_gateway_embed():
         "title",
         "Auto",
         "people on the moon",
-        {"vector": ["Embed", "people on the moon"]},
+        {"vector": ["Embed", "people on the moon", {"field": "text"}]},
     ]
     assert body["top_k"] == 30
     assert "ANN" not in json.dumps(body)
@@ -70,7 +70,7 @@ async def test_gateway_echo_is_preserved():
         "title",
         "Auto",
         "moon landing",
-        {"vector": ["Embed", "moon landing"]},
+        {"vector": ["Embed", "moon landing", {"field": "text"}]},
     ]
     assert result["performance"]["embedding_ms"] == 0.17
     assert result["routing"] == {"route": "fused", "policy": "v1", "tokens": 3, "executed": True}

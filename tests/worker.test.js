@@ -5,7 +5,9 @@ import { proxySearch, searchBody } from "../src/worker.js";
 
 test("worker sends one Auto query with an inline Embed expression", () => {
   assert.deepEqual(searchBody("moon landing", 50), {
-    rank_by: ["title", "Auto", "moon landing", { vector: ["Embed", "moon landing"] }],
+    rank_by: ["title", "Auto", "moon landing", {
+      vector: ["Embed", "moon landing", { field: "text" }],
+    }],
     top_k: 30,
     include_attributes: ["title", "text", "url", "article_id", "paragraph", "is_lead"],
   });
@@ -41,7 +43,7 @@ test("worker preserves gateway performance and routing echoes", async (t) => {
     "title",
     "Auto",
     "first people on the moon",
-    { vector: ["Embed", "first people on the moon"] },
+    { vector: ["Embed", "first people on the moon", { field: "text" }] },
   ]);
   assert.equal(body.performance.embedding_ms, 0.13);
   assert.deepEqual(body.routing, { route: "semantic", policy: "v1", tokens: 8, executed: true });
